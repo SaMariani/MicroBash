@@ -107,38 +107,59 @@ int main(int argc, char **argv) {
 	    	//printf("%s $ \n", pwd());
 		}else{
 			char* comand=my_malloc(strlen(line)*sizeof(char));
-			comand=strcpy(comand, line);
+			comand=line;
 			char* rest = comand;
 			comand = strtok_r(rest, "|", &rest);
 			printf("Comando: %s\n", comand);
 			
-			char* arg;//=my_malloc(strlen(comand)*sizeof(char));
+			char* arg[10]={};
+			*arg=NULL;
+			char* mule;
 			char* rest2 = comand;
-			arg = strtok_r(rest2, " ", &rest2);
-			terminaStringa(arg); //se path termina con \n lo sostituisco con '\0'
-			while(arg!=NULL){
-				if(strncmp(arg, "$", 1)==0){
+			int i=0;
+			do{
+				//mule=strtok_r(rest2, " ", &rest2);
+				//arg[i]=NULL;
+				arg[i]=my_malloc(8*sizeof(char));
+				//arg[i]=NULL;
+				sprintf(arg[i], "%s", strtok_r(rest2, " ", &rest2));/**/
+				++i;
+			}while(arg[i]!=NULL&&i<10);
+			for(int i=0; i<0; ++i){
+				free(arg[i]);
+			}
+			/*
+			for(int i=0; i<10; ++i){
+				printf("arg%d = %s\n",i,arg[i]);
+			}
+			//terminaStringa(arg[0]); //se path termina con \n lo sostituisco con '\0'
+			//int i=1;
+			/*while(arg[i]!=NULL&&i<2){
+			
+				if(strncmp(arg[i], "$", 1)==0){
 					char *pathvar;
-					pathvar = getenv(arg+1);
+					pathvar = getenv(arg[i]+1);
 					if(pathvar==NULL){
-						if(setenv(arg+1,arg+1,0)<0)
+						if(setenv(arg[i]+1,"ciao",0)<0)
 							fail_errno("Error: cannot set the variable");
-						pathvar = getenv(arg+1);
-						printf("1pathvar=%s ",pathvar); printf("Argomento: %s\n", arg+1);
+						pathvar = getenv(arg[i]+1);
 					}
-					printf("pathvar=%s ",pathvar); printf("Argomento: %s\n", arg+1);
+					arg[i]=pathvar;
+					printf("1pathvar=%s ",pathvar); printf("Argomento: %s\n", arg[i]);
 				}
-				if(strncmp(arg, "<", 1)==0){
+				
+				if(strncmp(arg[i], "<", 1)==0){
 				
 				}
-				if(strncmp(arg, ">", 1)==0){
+				if(strncmp(arg[i], ">", 1)==0){
 				
 				}
 				printf("Comando: %s\n", comand);
-				printf("Argomento: %s\n", arg);
-				arg = strtok_r(NULL, " ", &rest2);
-				printf("Argomento: %s\n", arg);
-			}
+				printf("Argomento: %s\n", arg[i]);
+				arg[i] = strtok_r(NULL, " ", &rest2);
+				printf("Argomento: %s\n", arg[i]);
+				++i;
+			}*/
 			//free(arg);
 			//free(comand);
 		}
