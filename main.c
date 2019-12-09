@@ -76,10 +76,18 @@ void cd(char *path){
     if(chdir(path) == -1)
         fail_errno("Error: cannot change working directory");
 }
+
+void terminaStringa(char *path){
+	char *pos;
+	if ((pos=strchr(path, '\n')) != NULL) //se path termina con \n lo sostituisco con '\0'
+			*pos = '\0';
+}
+
 int main(int argc, char **argv) {
 	int MAX=50;
 	FILE *stream=stdin;
-	while(1){
+	int flag=1;
+	while(flag){
 	    printf("%s $ ", pwd());
 	    char *line=my_malloc(MAX*sizeof(char));
 	    fgets(line, MAX, stream);
@@ -89,16 +97,49 @@ int main(int argc, char **argv) {
 			for(int i=3; i<strlen(line); ++i){
 				path[i-3]=line[i];
 			}
-			char *pos;
-			if ((pos=strchr(path, '\n')) != NULL) //se path termina con \n lo sostituisco con '\0'
-				*pos = '\0';
+			terminaStringa(path);
 			//printf("PATH E' >%s< $ \n", path);
 			cd(path);
 			free(path);
-	    	//printf("%s $ ", pwd());
+	    	//printf("%s $ \n", pwd());
+		}else{
+			char* comand=my_malloc(strlen(line)*sizeof(char));
+			comand=strcpy(comand, line);
+			char* rest = comand;
+			comand = strtok_r(rest, "|", &rest);
+			printf("Comando: %s\n", comand);
+			
+			char* arg;//=my_malloc(strlen(comand)*sizeof(char));
+			char* rest2 = comand;
+			arg = strtok_r(rest2, " ", &rest2);
+			terminaStringa(arg); //se path termina con \n lo sostituisco con '\0'
+			while(arg!=NULL){
+				if(strncmp(arg, "$", 1)==0){
+					char *pathvar;
+					pathvar = getenv(arg+1);
+					if(pathvar==NULL){
+						if(setenv(arg+1,arg+1,0)<0)
+							fail_errno("Error: cannot set the variable");
+						pathvar = getenv(arg+1);
+						printf("1pathvar=%s ",pathvar); printf("Argomento: %s\n", arg+1);
+					}
+					printf("pathvar=%s ",pathvar); printf("Argomento: %s\n", arg+1);
+				}
+				if(strncmp(arg, "<", 1)==0){
+				
+				}
+				if(strncmp(arg, ">", 1)==0){
+				
+				}
+				printf("Comando: %s\n", comand);
+				printf("Argomento: %s\n", arg);
+				arg = strtok_r(NULL, " ", &rest2);
+				printf("Argomento: %s\n", arg);
+			}
+			//free(arg);
+			//free(comand);
 		}
 		free(line);
-		
 	}
-    //return 0;
+    return 0;
 }
