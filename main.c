@@ -1,5 +1,8 @@
 #include <stdio.h>
-#include "pingpong.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #define PATH "PATH"
 #define PWD "PWD"
 #define HOME "HOME"
