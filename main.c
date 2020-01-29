@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <stdbool.h>
 #define PATH "PATH"
 #define PWD "PWD"
 #define HOME "HOME"
@@ -75,33 +74,22 @@ char * pwd(){
     return cwd;
 }
 void cd(char *path){
-    char *badChar;
-    if(*path==NULL)
-        chdir(getenv("HOME"));
-    else if ((badChar=strchr(path, ' ')) != NULL)
-	printf("Error: il comando cd ha un solo argomento\n");
+	char *badChar;
+    if(path==NULL)
+        chdir(HOME);
     else if ((badChar=strchr(path, '>')) != NULL)
-	printf("Error: redirezione con comando cd\n");
+		printf("Error: redirezione con comando cd\n");
     else if ((badChar=strchr(path, '<')) != NULL)
-	printf("Error: redirezione con comando cd\n");
+		printf("Error: redirezione con comando cd\n");
     else if ((badChar=strchr(path, '|')) != NULL)
-	printf("Error: cd usato con altri comandi\n");
+		printf("Error: cd usato con altri comandi\n");
+	else if ((badChar=strchr(path, ' ')) != NULL)
+		printf("Error: il comando cd ha un solo argomento\n");
     else if(chdir(path) == -1)
-	printf("Error: file o directory inesistente\n");
-}
-
-//Elimina,all'interno di una stringa,gli spazi che precedono il primo carattere
-char* eliminaPrimiSpazi(char *path){
-	char *pos = my_malloc(strlen(path));
-	bool primiSpaziFiniti = false;	
-	for(int i = 0,j = 0; i<strlen(path); ++i){
-		if (path[i] != ' ' || primiSpaziFiniti){
-			pos[j++] = path[i];
-			primiSpaziFiniti = true;
-		}
-	}
-	path = pos;
-	return path;
+		printf("Error: file o directory inesistente\n");
+	/*
+    if(chdir(path) == -1)
+        fail_errno("Error: cannot change working directory");*/
 }
 
 void terminaStringa(char *path){
@@ -115,56 +103,98 @@ int main(int argc, char **argv) {
 	FILE *stream=stdin;
 	int flag=1;
 	while(flag){
-	    printf("%s $ ", pwd());
+	    printf("%s $ ", pwd()); // stampa prompt
 	    char *line=my_malloc(MAX*sizeof(char));
 	    fgets(line, MAX, stream);
 		//printf("FGETS: %s\n", line);
-		line = eliminaPrimiSpazi(line);
+
+		
+		// se comando built-in:
 		if(strncmp(line, "cd", 2)==0){
 			char *path=my_malloc(strlen(line));
-			//printf("LINE E' >%s< $ \n", line);
 			for(int i=3; i<strlen(line); ++i){
-				path[i-3]=line[i];				
-			}
+				path[i-3]=line[i];
+			} // posso mettere direttamente path = line[3]
 			terminaStringa(path);
-			path = eliminaPrimiSpazi(path);
+			//printf("PATH E' >%s< $ \n", path);
 			cd(path);
 			free(path);
 	    	//printf("%s $ \n", pwd());
+
+		
+		// se comando esterno:
 		}else{
-			char* comand=my_malloc(strlen(line)*sizeof(char));
-			comand=strcpy(comand, line);
-			char* rest = comand;
-			comand = strtok_r(rest, "|", &rest);
-			printf("Comando: %s\n", comand);
-			
-			char* arg;//=my_malloc(strlen(comand)*sizeof(char));
-			char* rest2 = comand;
-			arg = strtok_r(rest2, " ", &rest2);
-			terminaStringa(arg); //se path termina con \n lo sostituisco con '\0'
-			while(arg!=NULL){
-				if(strncmp(arg, "$", 1)==0){
-					char *pathvar;
-					pathvar = getenv(arg+1);
-					if(pathvar==NULL){
-						if(setenv(arg+1,arg+1,0)<0)
-							fail_errno("Error: cannot set the variable");
-						pathvar = getenv(arg+1);
-						printf("1pathvar=%s ",pathvar); printf("Argomento: %s\n", arg+1);
-					}
-					printf("pathvar=%s ",pathvar); printf("Argomento: %s\n", arg+1);
-				}
-				if(strncmp(arg, "<", 1)==0){
-				
-				}
-				if(strncmp(arg, ">", 1)==0){
-				
-				}
-				printf("Comando: %s\n", comand);
-				printf("Argomento: %s\n", arg);
-				arg = strtok_r(NULL, " ", &rest2);
-				printf("Argomento: %s\n", arg);
+			terminaStringa(line);
+			printf("LINE da elaborare = %s\n", line);
+			char* comand[10]={};
+			for(int i=0; i<10; ++i){
+				comand[i]=malloc(MAX*sizeof(char));
+				//comand[i]="";
 			}
+	//char str[] = "Geeks for Geeks"; 
+	char *str = line; 
+    char* token; 
+    char* rest = str; 
+  	int Ncomand = 0;
+    while ((token = strtok_r(rest, " | ", &rest))) {
+        printf("%s\n", token);
+		sprintf(comand[Ncomand], "%s", token);
+		Ncomand++;
+	}
+	printf("LINE dopo estrazione comandi = %s\n", line);
+			for(int i=0; i<Ncomand; ++i){
+				printf("comand%d = %s\n", i, comand[i]);
+				//free(arg[i]);
+			}/*
+			printf("LINE = %s\n", line);
+			char* arg[10]={};
+			//char* comandTemp=my_malloc(10*sizeof(char));
+			//strcpy(comandTemp,comand);
+			int k=0;
+			while(comand[k]!=NULL&&k<5){
+				char* rest2 = comand[i];
+				++k;
+				i=0;
+				do{
+					arg[i]=my_malloc(10*sizeof(char));
+					sprintf(arg[i], "%s", strtok_r(rest2, " ", &rest2));
+					terminaStringa(arg[i]);
+					++i;
+				}while(arg[i-1]!=NULL&&i<10);
+				for(int i=0; i<10; ++i){
+					printf("arg%d = %s\n", i, arg[i]);
+					//free(arg[i]);
+				}
+			}*/
+			
+			//terminaStringa(arg[0]); //se path termina con \n lo sostituisco con '\0'
+			/*i=0;
+			while(arg[i]!=NULL&&i<9){
+			
+				if(strncmp(arg[i], "$", 1)==0){
+					char *pathvar;
+					pathvar = getenv(arg[i]+1);
+					if(pathvar==NULL){
+						if(setenv(arg[i]+1,"ciao",0)<0)
+							fail_errno("Error: cannot set the variable");
+						pathvar = getenv(arg[i]+1);
+					}
+					arg[i]=pathvar;
+					printf("1pathvar=%s ",pathvar); printf("Argomento: %s\n", arg[i]);
+				}
+				
+				if(strncmp(arg[i], "<", 1)==0){
+				
+				}
+				if(strncmp(arg[i], ">", 1)==0){
+				
+				}
+				printf("Comando: %s\n", comand[0]);
+				//printf("Argomento: %s\n", arg[i]);
+				//arg[i] = strtok_r(NULL, " ", &rest2);
+				//printf("Argomento: %s\n", arg[i]);
+				++i;
+			}*/
 			//free(arg);
 			//free(comand);
 		}
