@@ -100,12 +100,12 @@ void terminaStringa(char *path){
 
 int main(int argc, char **argv) {
 	int MAX=50;
-	FILE *stream=stdin;
+	FILE *streamIN=stdin, *streamOUT=stdout;
 	int flag=1;
 	while(flag){
 	    printf("%s $ ", pwd()); // stampa prompt
 	    char *line=my_malloc(MAX*sizeof(char));
-	    fgets(line, MAX, stream);
+	    fgets(line, MAX, streamIN);
 		//printf("FGETS: %s\n", line);
 
 		
@@ -125,8 +125,8 @@ int main(int argc, char **argv) {
 		// se comando esterno:
 		}else{
 			terminaStringa(line);
-			printf("LINE da elaborare = %s\n", line);
-			char* comand[10]={};
+			fprintf(streamOUT, "LINE da elaborare = %s\n", line);
+			char** comand[10]={};
 			for(int i=0; i<10; ++i){
 				comand[i]=malloc(MAX*sizeof(char));
 				//comand[i]="";
@@ -136,16 +136,69 @@ int main(int argc, char **argv) {
     char* token; 
     char* rest = str; 
   	int Ncomand = 0;
-    while ((token = strtok_r(rest, " | ", &rest))) {
-        printf("%s\n", token);
-		sprintf(comand[Ncomand], "%s", token);
-		Ncomand++;
+    while ((token = strtok_r(rest, "|", &rest))) {
+        fprintf(streamOUT, "c: %s\n", token);
+		char* arg[5]={};
+//char init[]="\0";
+		for(int i=0; i<5; ++i){
+			arg[i]=malloc(MAX*sizeof(char));
+			//arg[i]=init;
+		}
+		char *str2 = token; 
+    	char* tokenArg; 
+    	char* rest2 = str2; 
+  		int Narg = 0;
+		while ((tokenArg = strtok_r(rest2, " ", &rest2))) {
+        	fprintf(streamOUT, "a: %s\n", tokenArg);
+
+			if(tokenArg[0]=='$'){
+				char *pathvar;
+				//arg senza $ // printf("Argomento: %s\n", tokenArg+1);
+				
+				pathvar = getenv(tokenArg+1);
+				if(pathvar==NULL){
+					if(setenv(tokenArg+1,"ciao",0)<0)
+						fail_errno("Error: cannot set the variable");
+					pathvar = getenv(tokenArg+1);
+				}
+				tokenArg=pathvar;
+				fprintf(streamOUT, "1pathvar=%s ",pathvar); fprintf(streamOUT, "Argomento: %s\n", tokenArg);
+			}
+
+			if(tokenArg[0]=='<'){
+				streamIN = fopen(tokenArg+1, "r");
+				if(streamIN==NULL){
+					printf("Error: cannot open the file");
+					exit(1);
+				}
+			}
+
+			if(tokenArg[0]=='>'){
+				streamOUT = fopen(tokenArg+1, "w");
+				if(streamOUT==NULL){
+					printf("Error: cannot open the file: %s", tokenArg+1);
+					exit(1);
+				}
+			}
+
+
+
+			sprintf(arg[Narg], "%s", tokenArg);
+			++Narg;
+		}
+		comand[Ncomand]=arg;
+		++Ncomand;
 	}
-	printf("LINE dopo estrazione comandi = %s\n", line);
-			for(int i=0; i<Ncomand; ++i){
-				printf("comand%d = %s\n", i, comand[i]);
+	fprintf(streamOUT, "LINE dopo estrazione comandi = %s\n", line);
+	
+	
+			/*for(int c=0; c<Ncomand; ++c){
+				char **aux=comand[c];
+				for(int a=0; a<Narg; ++a){
+					printf("%s + ", aux[a]);
+				}
 				//free(arg[i]);
-			}/*
+			}*//*
 			printf("LINE = %s\n", line);
 			char* arg[10]={};
 			//char* comandTemp=my_malloc(10*sizeof(char));
@@ -198,7 +251,10 @@ int main(int argc, char **argv) {
 			//free(arg);
 			//free(comand);
 		}
+		
 		free(line);
+		//fclose(streamIN);
+		//fclose(streamOUT);
 	}
     return 0;
 }
